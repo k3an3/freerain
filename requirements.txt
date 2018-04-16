@@ -1,1 +1,4 @@
 flask
+flask-assets
+flask-socketio
+jsmin

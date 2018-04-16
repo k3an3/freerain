@@ -1,4 +1,4 @@
-from tempfile import SpooledTemporaryFile
+from flask_socketio import emit
 
 from app import socketio
 from utils import distribute_shards
@@ -6,10 +6,8 @@ from utils import distribute_shards
 
 @socketio.on('upload')
 def upload(data):
-    t = SpooledTemporaryFile()
-    t.write(data['file'])
-    distribute_shards(t, data['count'])
-    t.close()
+    h, m = distribute_shards(data['file'], data['count'])
+    return {'hash': h, 'name': data['name'], 'manifest': m}
 
 
 @socketio.on('fetch')

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-from app import socketio, app
 
 try:
     import eventlet
@@ -23,4 +22,6 @@ except ImportError:
         print('Using threading')
         create_thread_func = lambda f: threading.Thread(target=f)
         start_thread_func = lambda t: t.start()
+from events import *
+from app import socketio, app
 socketio.run(app, debug=True)
