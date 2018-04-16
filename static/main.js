@@ -1,37 +1,11 @@
 let ws = io.connect('//' + document.domain + ':' + location.port);
-window.indexedDB = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB || window.shimIndexedDB;
-let request = window.indexedDB.open("storage", 1);
 let filelist = $('#listing');
-let db;
-
-request.onupgradeneeded = event => {
-    let tdb = event.target.result;
-    tdb.createObjectStore("filestore", {keyPath: "hash"});
-    let store = tdb.createObjectStore("mapping", {keyPath: "hash"});
-    store.createIndex("name", "name", { unique: false});
-};
-
-request.onsuccess = event => {
-    db = event.target.result;
-    db.transaction("mapping").objectStore("mapping").openCursor().onsuccess = evt => {
-        let cursor = evt.target.result;
-        if (cursor) {
-            console.log(cursor.value);
-            filelist.append('<li id="' + cursor.value.hash + '">' + cursor.value.name + '</li>');
-            cursor.continue();
-        }
-    }
-};
 
 let upload = $('#upload');
 
-function record_file(data) {
-    let os = db.transaction(["mapping"], "readwrite").objectStore("mapping");
-    let request = os.add(data)
-    request.onsuccess = event => {
-        console.log(data);
-    };
-}
+$('#listing').on("click", "li", e => {
+    fetch_manifest(e.target.id);
+});
 
 upload.on("drop", e => {
 

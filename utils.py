@@ -1,7 +1,7 @@
 import hashlib
 
 
-chunk_size_b = 1024
+chunk_size_b = 64
 
 
 def distribute_shards(data, copies: int = 3):
@@ -10,8 +10,9 @@ def distribute_shards(data, copies: int = 3):
     manifest = []
     from app import socketio
     for i in range(0, len(data), chunk_size):
-        tmp_h = hashlib.sha3_256(data).hexdigest()
+        chunk = data[i:i+chunk_size]
+        tmp_h = hashlib.sha3_256(chunk).hexdigest()
         socketio.emit('distribute', {'hash': tmp_h,
-                                     'data': data[i:i+chunk_size]})
+                                     'data': chunk})
         manifest.append(tmp_h)
     return h, manifest

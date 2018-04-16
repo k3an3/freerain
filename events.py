@@ -1,3 +1,4 @@
+from flask import request
 from flask_socketio import emit
 
 from app import socketio
@@ -12,4 +13,9 @@ def upload(data):
 
 @socketio.on('fetch')
 def fetch(data):
-    emit('')
+    emit('retrieve', {'hash': data['hash'], 'sid': request.sid}, broadcast=True)
+
+
+@socketio.on('retrieval')
+def retrieve(data):
+    emit('chunk', {'hash': data['hash'], 'data': data['data']}, room=data['sid'])
