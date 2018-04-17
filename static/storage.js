@@ -72,11 +72,19 @@ function record_file(data) {
 
 function download_file(content, filename, contentType) {
     if(!contentType) contentType = 'application/octet-stream';
-    var a = document.createElement('a');
-    var blob = new Blob([content], {'type':contentType});
+    let a = document.createElement('a');
+    let blob = new Blob([content], {'type':contentType});
     a.href = window.URL.createObjectURL(blob);
     a.download = filename;
     a.click();
+}
+
+function get_all_chunks(hash) {
+    let chunks = [];
+    download[hash].manifest.forEach(e => {
+        chunks.push(reverse_map[e].data);
+    });
+    return chunks;
 }
 
 function download_chunk(data) {
@@ -87,13 +95,7 @@ function download_chunk(data) {
     let org_hash = reverse_map[hash].hash;
     download[org_hash].count++;
     if (download[org_hash].count == download[org_hash].manifest.length) {
-        let result = new ArrayBuffer(chunk_size * download[org_hash].manifest.length);
-        let i = 0;
-        $.each(download[org_hash].manifest, e => {
-            result[i] = reverse_map[hash].data;
-        });
-        let b = new Blob([result]);
-        $('#downloadframe').attr('src', URL.createObjectURL(b));
+        let result = new Blob(get_all_chunks(org_hash));
         download_file(result, download[org_hash].name);
     }
 }
@@ -106,7 +108,7 @@ function fetch_manifest(hash) {
         download[hash].manifest = event.target.result.manifest;
         download[hash].name = event.target.result.name
         download[hash].count = 0;
-        $.each(event.target.result.manifest, e => {
+        event.target.result.manifest.forEach(e => {
             reverse_map[e] = {hash: hash, order: i};
             ws.emit('fetch', {hash: e});
             i++;
@@ -152,6 +154,7 @@ function read_file(data) {
 
                 reader.onloadend = e => {
                     filedata = this.result;
+                    ws.emit('retrieval', {data: filedata, hash: data.hash, sid: data.sid});
                 };
 
                 reader.readAsText(file);
@@ -159,10 +162,9 @@ function read_file(data) {
         }, errorHandler);
     } else {
         db.transaction("filestore").objectStore("filestore").get(data.hash).onsuccess = event => {
-            data = event.target.result;
+            filedata = event.target.result.data;
+            ws.emit('retrieval', {data: filedata, hash: data.hash, sid: data.sid});
         };
     }
-
-    ws.emit('retrieval', {data: filedata, hash: data.hash, sid: data.sid});
 }
 
