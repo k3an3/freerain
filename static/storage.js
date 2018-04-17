@@ -70,27 +70,42 @@ function record_file(data) {
     };
 }
 
-function download_chunk(hash, data) {
-    reverse_map[hash]['data'] = data;
-    let org_hash = reverse_map[hash]['hash']
-    download[org_hash]['count']++;
-    if (download[org_hash]['count'] == download[org_hash]['manifest'].length) {
-        let result = new ArrayBuffer(chunk_size * download[org_hash['manifest'].length]);
+function download_file(content, filename, contentType) {
+    if(!contentType) contentType = 'application/octet-stream';
+    var a = document.createElement('a');
+    var blob = new Blob([content], {'type':contentType});
+    a.href = window.URL.createObjectURL(blob);
+    a.download = filename;
+    a.click();
+}
+
+function download_chunk(data) {
+    let hash = data.hash;
+    if (reverse_map[hash] == null)
+        reverse_map[hash] = {};
+    reverse_map[hash].data = data.data;
+    let org_hash = reverse_map[hash].hash;
+    download[org_hash].count++;
+    if (download[org_hash].count == download[org_hash].manifest.length) {
+        let result = new ArrayBuffer(chunk_size * download[org_hash].manifest.length);
         let i = 0;
-        $.each(download[org_hash]['manifest'], e => {
-            result[i] = reverse_map[hash]['data'];
+        $.each(download[org_hash].manifest, e => {
+            result[i] = reverse_map[hash].data;
         });
-        var data = new Blob([result]);
-        $('#downloadframe').attr('src', URL.createObjectURL(data));
-    a.href = URL.createObjectURL(data);
+        let b = new Blob([result]);
+        $('#downloadframe').attr('src', URL.createObjectURL(b));
+        download_file(result, download[org_hash].name);
     }
 }
 
 function fetch_manifest(hash) {
     db.transaction("mapping").objectStore("mapping").get(hash).onsuccess = event => {
         let i = 0;
-        download[org_hash]['manifest'] = event.target.result.manifest;
-        download[org_hash]['count'] = 0;
+        if (download[hash] == null)
+            download[hash] = {}
+        download[hash].manifest = event.target.result.manifest;
+        download[hash].name = event.target.result.name
+        download[hash].count = 0;
         $.each(event.target.result.manifest, e => {
             reverse_map[e] = {hash: hash, order: i};
             ws.emit('fetch', {hash: e});
@@ -101,7 +116,7 @@ function fetch_manifest(hash) {
 
 function save_file(data) {
     if (filesystem != null) {
-        filesystem.root.getFile(data['hash'], {create: true}, fe => {
+        filesystem.root.getFile(data.hash, {create: true}, fe => {
             fe.createWriter(fileWriter => {
 
                 fileWriter.onwriteend = e => {
@@ -131,7 +146,7 @@ function save_file(data) {
 function read_file(data) {
     let filedata = null;
     if (filesystem != null) {
-        filesystem.root.getFile(data['hash'], {}, fe => {
+        filesystem.root.getFile(data.hash, {}, fe => {
             fe.file(file => {
                 var reader = new FileReader();
 
@@ -143,10 +158,11 @@ function read_file(data) {
             })
         }, errorHandler);
     } else {
-        db.transaction("filestore").objectStore("filestore").get(hash).onsuccess = event => {
-            data = event.target.result.value;
+        db.transaction("filestore").objectStore("filestore").get(data.hash).onsuccess = event => {
+            data = event.target.result;
         };
     }
 
-    ws.emit('retrieval', {data: filedata, hash: data['hash'], sid: data['sid']});
+    ws.emit('retrieval', {data: filedata, hash: data.hash, sid: data.sid});
 }
+
