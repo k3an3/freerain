@@ -60,12 +60,16 @@ function update_file_listing() {
         db.transaction("mapping").objectStore("mapping").openCursor().onsuccess = evt => {
             let cursor = evt.target.result;
             if (cursor) {
-                filelist.append("<tr><td>" + cursor.value.name + "</td><td>" + 0 + '</td><td>' +
+                filelist.append("<tr><td>" + cursor.value.name + "</td><td>" + 0 + '</td><td>' + 0 + '</td><td>' +
                     '<div class="btn-group" role="group">' +
                     '<button type="button" id="download-' + cursor.value.hash + '" class="btn btn-sm btn-outline-primary file-action">Download</button>' +
                     '<button type="button" id="delete-' + cursor.value.hash + '" class="btn btn-sm btn-outline-danger file-action">Delete</button>' +
+                    '</div>' +
+                    '<div id="progressdiv-' + cursor.value.hash + '" class="progress dlprogress">' +
+                    '  <div id="progress-' + cursor.value.hash + '" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%"></div>' +
                     '</div></td></tr>');
                 cursor.continue();
+                $('.dlprogress').hide();
             }
         }
 }
@@ -75,11 +79,15 @@ function record_file(data) {
     let request = os.add(data)
     request.onsuccess = event => {};
     update_file_listing();
+    progressdiv.hide();
 }
 
-function download_file(content, filename, contentType) {
+function download_file(content, filename, contentType, hash) {
     if(!contentType) contentType = 'application/octet-stream';
     let a = document.createElement('a');
+    let bar = $('#progress-' + hash);
+    bar.addClass('bg-success');
+    bar.text('Decrypting');
 
     kbpgp.unbox({keyfetch: instance, armored: content}, (err, res) => {
         if (err) {
@@ -108,13 +116,25 @@ function download_chunk(data) {
         reverse_map[hash] = {};
     reverse_map[hash].data = data.data;
     let org_hash = reverse_map[hash].hash;
+    let bar = $('#progress-' + org_hash);
+    bar.removeClass('bg-warning');
+    let progress = 100 * download[org_hash].count / download[org_hash].manifest.length;
+    bar.text(Math.floor(progress) + "%");
     download[org_hash].count++;
+    bar.attr('style', 'width: ' + progress + '%');
     if (download[org_hash].count == download[org_hash].manifest.length) {
-        download_file(get_all_chunks(org_hash), download[org_hash].name);
+        download_file(get_all_chunks(org_hash), download[org_hash].name, org_hash);
+        bar.attr('style', 'width: 0%');
+        $('#progressdiv-' + org_hash).hide();
     }
 }
 
 function fetch_manifest(hash) {
+    $('#progressdiv-' + hash).show();
+    let bar = $('#progress-' + hash);
+    bar.attr('style', 'width: 100%');
+    bar.addClass('bg-warning');
+    bar.text('Requesting...');
     db.transaction("mapping").objectStore("mapping").get(hash).onsuccess = event => {
         let i = 0;
         if (download[hash] == null)

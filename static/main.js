@@ -1,6 +1,9 @@
 let ws = io.connect('//' + document.domain + ':' + location.port);
 let filelist = $('#file-listing').find('tbody');
 let passphrase = "typical";
+let progress = $('#progressmain');
+let progressdiv = $('#progressdivmain');
+progressdiv.hide();
 
 let dropzone = $('#drop-zone');
 
@@ -11,7 +14,6 @@ $(document).on("click", ".file-action", e => {
     else
         delete_manifest(target[1]);
 });
-
 
 let instance = null;
 let priv = localStorage.getItem('privkey');
@@ -26,16 +28,19 @@ if (priv != null) {
         instance = ins;
     });
 } else {
-    console.log("Generating key...");
+    progressdiv.show();
+    progress.attr('style', 'width: 100%');
+    progress.text("Generating key...");
     kbpgp.KeyManager.generate_ecc({userid: "Bo Jackson <user@example.com>"}, (err, ins) => {
         instance = ins;
         console.log("Done generating key.");
         ins.sign({}, err => {
             ins.export_pgp_private({passphrase: passphrase}, (err, key) => {
-                console.log(key + " " + err);
                 localStorage.setItem('privkey', key);
             });
         });
+        progressdiv.hide();
+        progress.attr('style', 'width: 0%');
     });
 }
 
@@ -51,10 +56,13 @@ dropzone.on("dragleave", () => {
 });
 
 function handle_upload(e) {
+    progress.attr('style', 'width: 100%');
+    progress.addClass('bg-success');
+    progress.text('Encrypting...');
+    progressdiv.show();
     e.preventDefault();
     // prevent browser default behavior on drop
     dropzone.attr('class', 'upload-drop-zone');
-    console.log(e);
 
     let files = null;
     if (e.originalEvent.dataTransfer != null)
@@ -82,6 +90,9 @@ function handle_upload(e) {
                 //sign_with: instance,
             };
             kbpgp.box(crypt_params, (err, string, buf) => {
+                progress.removeClass('bg-success');
+                progress.text('Uploading...');
+                console.log("Done");
                 ws.emit('dropzone', {
                         file: string,
                         name: fr.name,

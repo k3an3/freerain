@@ -1,7 +1,7 @@
 import hashlib
 
 
-chunk_size_b = 64
+chunk_size_b = 1000000
 
 
 def distribute_shards(data, copies: int = 3):
