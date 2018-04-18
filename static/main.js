@@ -1,10 +1,15 @@
 let ws = io.connect('//' + document.domain + ':' + location.port);
-let filelist = $('#listing');
+let filelist = $('#file-listing').find('tbody');
+let passphrase = "typical";
 
-let upload = $('#upload');
+let dropzone = $('#drop-zone');
 
-$('#listing').on("click", "li", e => {
-    fetch_manifest(e.target.id);
+$(document).on("click", ".file-action", e => {
+    let target = e.target.id.split('-');
+    if (target[0] == 'download')
+        fetch_manifest(target[1]);
+    else
+        delete_manifest(target[1]);
 });
 
 
@@ -14,10 +19,9 @@ if (priv != null) {
     console.log("Loading key");
     kbpgp.KeyManager.import_from_armored_pgp({armored: priv}, (err, ins) => {
         console.log(err);
-        console.log(ins)
         if (ins.is_pgp_locked)
             ins.unlock_pgp({
-                passphrase: 'typical'
+                passphrase: passphrase
             }, e => {});
         instance = ins;
     });
@@ -27,7 +31,7 @@ if (priv != null) {
         instance = ins;
         console.log("Done generating key.");
         ins.sign({}, err => {
-            ins.export_pgp_private({passphrase: 'typical'}, (err, key) => {
+            ins.export_pgp_private({passphrase: passphrase}, (err, key) => {
                 console.log(key + " " + err);
                 localStorage.setItem('privkey', key);
             });
@@ -35,17 +39,35 @@ if (priv != null) {
     });
 }
 
-upload.on("drop", e => {
+$('#js-upload-form').on('submit', handle_upload);
+dropzone.on("drop", handle_upload);
+dropzone.on("dragover", () => {
+    dropzone.attr('class', 'upload-drop-zone drop');
+    return false;
+});
+dropzone.on("dragleave", () => {
+    dropzone.attr('class', 'upload-drop-zone');
+    return false;
+});
 
-    // prevent browser default behavior on drop
+function handle_upload(e) {
     e.preventDefault();
+    // prevent browser default behavior on drop
+    dropzone.attr('class', 'upload-drop-zone');
+    console.log(e);
+
+    let files = null;
+    if (e.originalEvent.dataTransfer != null)
+        files = e.originalEvent.dataTransfer.files;
+    else
+        files = $('#js-upload-files')[0].files;
 
     // iterate over the files dragged on to the browser
-    for (let x = 0; x < e.originalEvent.dataTransfer.files.length; x++) {
+    for (let x = 0; x < files.length; x++) {
 
         // instantiate a new FileReader object
         let fr = new FileReader();
-        let file = e.originalEvent.dataTransfer.files[x];
+        let file = files[x];
         fr.name = file.name;
 
 
@@ -60,7 +82,7 @@ upload.on("drop", e => {
                 //sign_with: instance,
             };
             kbpgp.box(crypt_params, (err, string, buf) => {
-                ws.emit('upload', {
+                ws.emit('dropzone', {
                         file: string,
                         name: fr.name,
                         count: 3
@@ -73,4 +95,4 @@ upload.on("drop", e => {
         fr.readAsArrayBuffer(file);
     }
     console.log("did a thing");
-});
+}

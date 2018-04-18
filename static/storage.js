@@ -54,14 +54,17 @@ request.onsuccess = event => {
     update_file_listing();
 };
 
-setInterval(update_file_listing(), 1000);
-
 function update_file_listing() {
     if (db != null)
+        filelist.find('tr').remove();
         db.transaction("mapping").objectStore("mapping").openCursor().onsuccess = evt => {
             let cursor = evt.target.result;
             if (cursor) {
-                filelist.append('<li class="file" id="' + cursor.value.hash + '">' + cursor.value.name + '</li>');
+                filelist.append("<tr><td>" + cursor.value.name + "</td><td>" + 0 + '</td><td>' +
+                    '<div class="btn-group" role="group">' +
+                    '<button type="button" id="download-' + cursor.value.hash + '" class="btn btn-sm btn-outline-primary file-action">Download</button>' +
+                    '<button type="button" id="delete-' + cursor.value.hash + '" class="btn btn-sm btn-outline-danger file-action">Delete</button>' +
+                    '</div></td></tr>');
                 cursor.continue();
             }
         }
@@ -70,22 +73,23 @@ function update_file_listing() {
 function record_file(data) {
     let os = db.transaction(["mapping"], "readwrite").objectStore("mapping");
     let request = os.add(data)
-    request.onsuccess = event => {
-    };
+    request.onsuccess = event => {};
+    update_file_listing();
 }
 
 function download_file(content, filename, contentType) {
     if(!contentType) contentType = 'application/octet-stream';
     let a = document.createElement('a');
-    console.log(content);
-    console.log(instance);
 
     kbpgp.unbox({keyfetch: instance, armored: content}, (err, res) => {
-        console.log(err, res);
-        let blob = new Blob([res[0]], {'type': contentType});
-        a.href = window.URL.createObjectURL(blob);
-        a.download = filename;
-        a.click();
+        if (err) {
+            console.log(err);
+        } else {
+            let blob = new Blob([res[0]], {'type': contentType});
+            a.href = window.URL.createObjectURL(blob);
+            a.download = filename;
+            a.click();
+        }
     });
 }
 
@@ -126,6 +130,23 @@ function fetch_manifest(hash) {
     };
 }
 
+function delete_manifest(hash) {
+    let os = db.transaction("mapping", "readwrite").objectStore("mapping");
+    os.get(hash).onsuccess = event => {
+        if (download[hash] != null)
+            delete download[hash];
+        event.target.result.manifest.forEach(e => {
+            ws.emit('delete', {hash: e});
+        });
+    };
+    os.delete(hash);
+    update_file_listing();
+}
+
+function delete_chunk(data) {
+     db.transaction("filestore", "readwrite").objectStore("filestore").delete(data.hash);
+}
+
 function save_file(data) {
     if (filesystem != null) {
         filesystem.root.getFile(data.hash, {create: true}, fe => {
@@ -149,9 +170,7 @@ function save_file(data) {
     } else {
         let os = db.transaction(["filestore"], "readwrite").objectStore("filestore");
         let request = os.add(data);
-        request.onsuccess = event => {
-            console.log(data);
-        };
+        request.onsuccess = event => {};
     }
 }
 

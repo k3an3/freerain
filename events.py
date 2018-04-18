@@ -5,7 +5,7 @@ from app import socketio
 from utils import distribute_shards
 
 
-@socketio.on('upload')
+@socketio.on('dropzone')
 def upload(data):
     h, m = distribute_shards(data['file'].encode(), data['count'])
     return {'hash': h, 'name': data['name'], 'manifest': m}
@@ -19,3 +19,8 @@ def fetch(data):
 @socketio.on('retrieval')
 def retrieve(data):
     emit('chunk', {'hash': data['hash'], 'data': data['data']}, room=data['sid'])
+
+
+@socketio.on('delete')
+def delete(data):
+    emit('delete', {'hash': data['hash']})

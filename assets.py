@@ -12,3 +12,11 @@ common_js = Bundle(
         output='public/js/common.js'
     ),
 )
+
+common_css = Bundle(
+    Bundle(
+        'style.css',
+        filters='cssmin',
+        output='public/css/common.css'
+    )
+)

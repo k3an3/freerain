@@ -1,9 +1,61 @@
 <!doctype html>
-<title>Upload new File</title>
-<h1>Upload new File</h1>
-<p><input type=file id=upload name=file>
-<ul id="listing">
-</ul>
+<html lang="en">
+<head>
+    <title>freerain</title>
+    {% assets "common_css" %}
+        <link rel="stylesheet" href="{{ ASSET_URL }}">
+    {% endassets %}
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css" integrity="sha384-9gVQ4dYFwwWSjIDZnLEWnxCjeSWFphJiwGPXr1jddIhOegiu1FwO5qRGvFXOdJZ4" crossorigin="anonymous">
+</head>
+<body>
+<nav class="navbar navbar-expand-md navbar-custom fixed-top">
+    <a class="navbar-brand" href="#">freerain</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse justify-content-md-center" id="navbarcollapse">
+        <ul class="navbar-nav mr-auto">
+            <li class="nav-item active">
+                <a class="nav-link" href="#">Files<span class="sr-only">(current)</span></a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">Keys</a>
+            </li>
+        </ul>
+    </div>
+</nav>
+
+<main role="main" class="container">
+    <h1>Files</h1>
+    <h5>Select files from your computer</h5>
+    <form id="js-upload-form">
+        <div class="form-inline">
+            <div class="form-group">
+                <input type="file" name="files[]" id="js-upload-files" multiple>
+            </div>
+            <button type="submit" class="btn btn-sm btn-primary" id="js-upload-submit">Upload files</button>
+        </div>
+    </form>
+    <h5>Or drag and drop files below</h5>
+    <div class="upload-drop-zone" id="drop-zone">
+        Just drag and drop files here
+    </div>
+    <table id="file-listing" class="table table-striped">
+        <thead>
+        <tr>
+            <th scope="col">Filename</th>
+            <th scope="col">Modified</th>
+            <th scope="col">Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+</main>
+
+</body>
 {% assets "common_js" %}
     <script type="text/javascript" src="{{ ASSET_URL }}"></script>
 {% endassets %}
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/js/bootstrap.min.js" integrity="sha384-uefMccjFJAIv6A+rW+L4AHf99KvxDjWSu1z9VI8SKNVmz4sk7buKt/6v9KI65qnm" crossorigin="anonymous"></script>
+</html>

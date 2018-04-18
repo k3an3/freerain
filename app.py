@@ -20,7 +20,7 @@ def index():
     return render_template('index.html')
 
 
-@app.route("/upload", methods=['POST'])
+@app.route("/dropzone", methods=['POST'])
 def upload():
     if 'file' not in request.files:
         flash('No file part')
