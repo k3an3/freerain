@@ -7,7 +7,7 @@ from utils import distribute_shards
 
 @socketio.on('upload')
 def upload(data):
-    h, m = distribute_shards(data['file'], data['count'])
+    h, m = distribute_shards(data['file'].encode(), data['count'])
     return {'hash': h, 'name': data['name'], 'manifest': m}
 
 
