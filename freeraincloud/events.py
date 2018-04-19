@@ -1,8 +1,8 @@
 from flask import request
 from flask_socketio import emit
 
-from app import socketio
-from utils import distribute_shards
+from .app import socketio
+from .utils import distribute_shards
 
 
 @socketio.on('dropzone')
@@ -23,4 +23,4 @@ def retrieve(data):
 
 @socketio.on('delete')
 def delete(data):
-    emit('delete', {'hash': data['hash']})
+    emit('delete', {'hash': data['hash']}, broadcast=True)
