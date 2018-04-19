@@ -92,7 +92,6 @@ function handle_upload(e) {
             kbpgp.box(crypt_params, (err, string, buf) => {
                 progress.removeClass('bg-success');
                 progress.text('Uploading...');
-                console.log("Done");
                 ws.emit('dropzone', {
                         file: string,
                         name: fr.name,
@@ -102,8 +101,6 @@ function handle_upload(e) {
             });
         });
 
-
-        fr.readAsArrayBuffer(file);
+        fr.readAsDataURL(file);
     }
-    console.log("did a thing");
 }

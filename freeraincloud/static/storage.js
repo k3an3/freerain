@@ -82,8 +82,7 @@ function record_file(data) {
     progressdiv.hide();
 }
 
-function download_file(content, filename, contentType, hash) {
-    if(!contentType) contentType = 'application/octet-stream';
+function download_file(content, filename, hash) {
     let a = document.createElement('a');
     let bar = $('#progress-' + hash);
     bar.addClass('bg-success');
@@ -93,8 +92,9 @@ function download_file(content, filename, contentType, hash) {
         if (err) {
             console.log(err);
         } else {
-            let blob = new Blob([res[0]], {'type': contentType});
-            a.href = window.URL.createObjectURL(blob);
+            //let blob = new Blob([res[0]], {'type': 'application/octet-stream'});
+            //a.href = window.URL.createObjectURL(blob);
+            a.href = res[0];
             a.download = filename;
             a.click();
         }
