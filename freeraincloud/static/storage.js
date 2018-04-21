@@ -82,8 +82,14 @@ function record_file(data) {
     progressdiv.hide();
 }
 
-function download_file(content, filename, hash) {
+function start_download(content, filename) {
     let a = document.createElement('a');
+    a.href = window.URL.createObjectURL(new Blob([content], {'type': 'application/octet-stream'}));
+    a.download = filename;
+    a.click();
+}
+
+function download_file(content, filename, hash) {
     let bar = $('#progress-' + hash);
     bar.addClass('bg-success');
     bar.text('Decrypting');
@@ -92,11 +98,7 @@ function download_file(content, filename, hash) {
         if (err) {
             console.log(err);
         } else {
-            //let blob = new Blob([res[0]], {'type': 'application/octet-stream'});
-            //a.href = window.URL.createObjectURL(blob);
-            a.href = res[0];
-            a.download = filename;
-            a.click();
+            start_download(base64ToArrayBuffer(res[0]), filename);
         }
     });
 }
@@ -211,8 +213,10 @@ function read_file(data) {
         }, errorHandler);
     } else {
         db.transaction("filestore").objectStore("filestore").get(data.hash).onsuccess = event => {
-            filedata = event.target.result.data;
-            ws.emit('retrieval', {data: filedata, hash: data.hash, sid: data.sid});
+            if (event.target.result != null) {
+                filedata = event.target.result.data;
+                ws.emit('retrieval', {data: filedata, hash: data.hash, sid: data.sid});
+            }
         };
     }
 }

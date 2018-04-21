@@ -8,6 +8,7 @@ common_js = Bundle(
         'main.js',
         'storage.js',
         'events.js',
+        'base64.js',
         filters='jsmin',
         output='public/js/common.js'
     ),

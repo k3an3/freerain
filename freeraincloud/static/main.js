@@ -85,9 +85,9 @@ function handle_upload(e) {
         fr.addEventListener("loadend", () => {
             // send the file over web sockets
             let crypt_params = {
-                msg: fr.result,
+                msg: base64ArrayBuffer(fr.result),
                 encrypt_for: instance,
-                //sign_with: instance,
+                sign_with: instance,
             };
             kbpgp.box(crypt_params, (err, string, buf) => {
                 progress.removeClass('bg-success');
@@ -101,6 +101,6 @@ function handle_upload(e) {
             });
         });
 
-        fr.readAsDataURL(file);
+        fr.readAsArrayBuffer(file);
     }
 }
