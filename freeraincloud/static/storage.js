@@ -54,13 +54,19 @@ request.onsuccess = event => {
     update_file_listing();
 };
 
+function humanFileSize(size) {
+    var i = Math.floor( Math.log(size) / Math.log(1024) );
+    return ( size / Math.pow(1024, i) ).toFixed(2) * 1 + ' ' + ['B', 'kB', 'MB', 'GB', 'TB'][i];
+};
+
 function update_file_listing() {
     if (db != null)
         filelist.find('tr').remove();
         db.transaction("mapping").objectStore("mapping").openCursor().onsuccess = evt => {
             let cursor = evt.target.result;
             if (cursor) {
-                filelist.append("<tr><td>" + cursor.value.name + "</td><td>" + 0 + '</td><td>' + 0 + '</td><td>' +
+                filelist.append("<tr><td>" + cursor.value.name + "</td><td>" + cursor.value.date + '</td><td>' +
+                    humanFileSize(cursor.value.size) + '</td><td>' +
                     '<div class="btn-group" role="group">' +
                     '<button type="button" id="download-' + cursor.value.hash + '" class="btn btn-sm btn-outline-primary file-action">Download</button>' +
                     '<button type="button" id="delete-' + cursor.value.hash + '" class="btn btn-sm btn-outline-danger file-action">Delete</button>' +

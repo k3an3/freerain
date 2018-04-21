@@ -1,3 +1,5 @@
+import datetime
+
 from flask import request
 from flask_socketio import emit
 
@@ -8,7 +10,8 @@ from .utils import distribute_shards
 @socketio.on('dropzone')
 def upload(data):
     h, m = distribute_shards(data['file'].encode(), data['count'])
-    return {'hash': h, 'name': data['name'], 'manifest': m}
+    return {'hash': h, 'name': data['name'], 'manifest': m, 'size': len(data['file']),
+            'date': datetime.datetime.now().strftime('%c')}
 
 
 @socketio.on('fetch')
